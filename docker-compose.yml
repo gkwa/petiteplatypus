@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    volumes:
+      - ./output:/tmp/trash
+    environment:
+      - GO_ENV=production
+    stdin_open: true
+    tty: true
+
