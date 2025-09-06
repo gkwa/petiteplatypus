@@ -1,24 +1,31 @@
 FROM golang:1.23-alpine AS builder
 
-# Install git for go modules
-RUN apk add --no-cache git
+# Install git for go modules with pinned version
+RUN apk add --no-cache git=2.45.2-r0
 
 # Set GOTOOLCHAIN to auto to allow downloading newer Go versions if needed
 ENV GOTOOLCHAIN=auto
 
-# Install the Go tools
-RUN go install github.com/gkwa/petiteplatypus@latest
-RUN go install github.com/Yakitrak/obsidian-cli@latest
+# Set working directory
+WORKDIR /build
 
-# Use alpine for the final image
-FROM alpine:latest
+# Copy source code and templates
+COPY . .
 
-# Install bash for script execution
-RUN apk add --no-cache bash
+# Install the Go tools and build our app in a single RUN instruction
+RUN go install github.com/gkwa/petiteplatypus@latest && \
+    go install github.com/Yakitrak/obsidian-cli@latest && \
+    go build -o petiteplatypus .
+
+# Use alpine with pinned version for the final image
+FROM alpine:3.20
+
+# Install bash for script execution with pinned version
+RUN apk add --no-cache bash=5.2.26-r0
 
 # Copy the Go binaries from builder stage
-COPY --from=builder /go/bin/petiteplatypus /usr/local/bin/
 COPY --from=builder /go/bin/obsidian-cli /usr/local/bin/
+COPY --from=builder /build/petiteplatypus /usr/local/bin/
 
 # Create working directory
 WORKDIR /app

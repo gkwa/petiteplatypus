@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 )
+
+//go:embed templates/*
+var templatesFS embed.FS
 
 var UserConfigDirectory = os.UserConfigDir
 
@@ -153,247 +157,35 @@ func generateVaultID() (string, error) {
 	return vaultID, nil
 }
 
+func loadEmbeddedTemplate(filename string) (string, error) {
+	debugLog(3, "Loading embedded template file: %s", filename)
+	content, err := templatesFS.ReadFile(filename)
+	if err != nil {
+		debugLog(2, "Failed to read embedded template file %s: %v", filename, err)
+		return "", fmt.Errorf("failed to read embedded template file %s: %w", filename, err)
+	}
+	debugLog(3, "Successfully loaded embedded template file: %s", filename)
+	return string(content), nil
+}
+
 func createObsidianFiles(obsidianDir string) error {
-	debugLog(2, "Defining Obsidian config files")
-	files := map[string]string{
-		"app.json":        "{}",
-		"appearance.json": "{}",
-		"core-plugins.json": `{
- "file-explorer": true,
- "global-search": true,
- "switcher": true,
- "graph": true,
- "backlink": true,
- "canvas": true,
- "outgoing-link": true,
- "tag-pane": true,
- "footnotes": false,
- "properties": false,
- "page-preview": true,
- "daily-notes": true,
- "templates": true,
- "note-composer": true,
- "command-palette": true,
- "slash-command": false,
- "editor-status": true,
- "bookmarks": true,
- "markdown-importer": false,
- "zk-prefixer": false,
- "random-note": false,
- "outline": true,
- "word-count": true,
- "slides": false,
- "audio-recorder": false,
- "workspaces": false,
- "file-recovery": true,
- "publish": false,
- "sync": true,
- "bases": true,
- "webviewer": false
-}`,
-		"graph.json": `{
- "collapse-filter": true,
- "search": "",
- "showTags": false,
- "showAttachments": false,
- "hideUnresolved": false,
- "showOrphans": true,
- "collapse-color-groups": true,
- "colorGroups": [],
- "collapse-display": true,
- "showArrow": false,
- "textFadeMultiplier": 0,
- "nodeSizeMultiplier": 1,
- "lineSizeMultiplier": 1,
- "collapse-forces": true,
- "centerStrength": 0.518713248970312,
- "repelStrength": 10,
- "linkStrength": 1,
- "linkDistance": 250,
- "scale": 1,
- "close": true
-}`,
-		"workspace.json": `{
- "main": {
-   "id": "d1e382edbf87edce",
-   "type": "split",
-   "children": [
-     {
-       "id": "f5b0ca4f913860db",
-       "type": "tabs",
-       "children": [
-         {
-           "id": "016d933bbc1cb39d",
-           "type": "leaf",
-           "state": {
-             "type": "markdown",
-             "state": {
-               "file": "Welcome.md",
-               "mode": "source",
-               "source": false
-             },
-             "icon": "lucide-file",
-             "title": "Welcome"
-           }
-         }
-       ],
-       "currentTab": 0
-     }
-   ],
-   "direction": "vertical"
- },
- "left": {
-   "id": "9de89e28bf65b7ae",
-   "type": "split",
-   "children": [
-     {
-       "id": "f1448db9adb9b5b5",
-       "type": "tabs",
-       "children": [
-         {
-           "id": "b66419c56a54b47b",
-           "type": "leaf",
-           "state": {
-             "type": "file-explorer",
-             "state": {
-               "sortOrder": "alphabetical",
-               "autoReveal": false
-             },
-             "icon": "lucide-folder-closed",
-             "title": "Files"
-           }
-         },
-         {
-           "id": "e7e94e8543f577d4",
-           "type": "leaf",
-           "state": {
-             "type": "search",
-             "state": {
-               "query": "",
-               "matchingCase": false,
-               "explainSearch": false,
-               "collapseAll": false,
-               "extraContext": false,
-               "sortOrder": "alphabetical"
-             },
-             "icon": "lucide-search",
-             "title": "Search"
-           }
-         },
-         {
-           "id": "cf8128b2ee5a6d15",
-           "type": "leaf",
-           "state": {
-             "type": "bookmarks",
-             "state": {},
-             "icon": "lucide-bookmark",
-             "title": "Bookmarks"
-           }
-         }
-       ]
-     }
-   ],
-   "direction": "horizontal",
-   "width": 300
- },
- "right": {
-   "id": "021487bd242948c6",
-   "type": "split",
-   "children": [
-     {
-       "id": "19769f2b7b7fa15d",
-       "type": "tabs",
-       "children": [
-         {
-           "id": "be8d0b8bcf32a675",
-           "type": "leaf",
-           "state": {
-             "type": "backlink",
-             "state": {
-               "file": "Welcome.md",
-               "collapseAll": false,
-               "extraContext": false,
-               "sortOrder": "alphabetical",
-               "showSearch": false,
-               "searchQuery": "",
-               "backlinkCollapsed": false,
-               "unlinkedCollapsed": true
-             },
-             "icon": "links-coming-in",
-             "title": "Backlinks for Welcome"
-           }
-         },
-         {
-           "id": "77a759e6bd5cbf8b",
-           "type": "leaf",
-           "state": {
-             "type": "outgoing-link",
-             "state": {
-               "file": "Welcome.md",
-               "linksCollapsed": false,
-               "unlinkedCollapsed": true
-             },
-             "icon": "links-going-out",
-             "title": "Outgoing links from Welcome"
-           }
-         },
-         {
-           "id": "6a0af20ca5bae924",
-           "type": "leaf",
-           "state": {
-             "type": "tag",
-             "state": {
-               "sortOrder": "frequency",
-               "useHierarchy": true,
-               "showSearch": false,
-               "searchQuery": ""
-             },
-             "icon": "lucide-tags",
-             "title": "Tags"
-           }
-         },
-         {
-           "id": "ed6dcab8808761f7",
-           "type": "leaf",
-           "state": {
-             "type": "outline",
-             "state": {
-               "file": "Welcome.md",
-               "followCursor": false,
-               "showSearch": false,
-               "searchQuery": ""
-             },
-             "icon": "lucide-list",
-             "title": "Outline of Welcome"
-           }
-         }
-       ]
-     }
-   ],
-   "direction": "horizontal",
-   "width": 300,
-   "collapsed": true
- },
- "left-ribbon": {
-   "hiddenItems": {
-     "switcher:Open quick switcher": false,
-     "graph:Open graph view": false,
-     "canvas:Create new canvas": false,
-     "daily-notes:Open today's daily note": false,
-     "templates:Insert template": false,
-     "command-palette:Open command palette": false,
-     "bases:Create new base": false
-   }
- },
- "active": "016d933bbc1cb39d",
- "lastOpenFiles": [
-   "Welcome.md"
- ]
-}`,
+	debugLog(2, "Defining Obsidian config files from embedded templates")
+	templateFiles := map[string]string{
+		"app.json":          "templates/app.json",
+		"appearance.json":   "templates/appearance.json",
+		"core-plugins.json": "templates/core-plugins.json",
+		"graph.json":        "templates/graph.json",
+		"workspace.json":    "templates/workspace.json",
 	}
 
-	debugLog(2, "Writing %d Obsidian config files", len(files))
-	for filename, content := range files {
+	debugLog(2, "Writing %d Obsidian config files", len(templateFiles))
+	for filename, templatePath := range templateFiles {
+		debugLog(3, "Loading embedded template for: %s", filename)
+		content, err := loadEmbeddedTemplate(templatePath)
+		if err != nil {
+			return err
+		}
+
 		filePath := filepath.Join(obsidianDir, filename)
 		debugLog(3, "Writing file: %s", filePath)
 		if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
@@ -408,16 +200,18 @@ func createObsidianFiles(obsidianDir string) error {
 
 func createInitialFiles(vaultPath string) error {
 	debugLog(2, "Creating initial markdown files")
-	files := map[string]string{
-		"Welcome.md": `This is your new *vault*.
-
-Make a note of something, [[create a link]], or try [the Importer](https://help.obsidian.md/Plugins/Importer)!
-
-When you're ready, delete this note and make the vault your own.`,
+	templateFiles := map[string]string{
+		"Welcome.md": "templates/Welcome.md",
 	}
 
-	debugLog(2, "Writing %d initial files", len(files))
-	for filename, content := range files {
+	debugLog(2, "Writing %d initial files", len(templateFiles))
+	for filename, templatePath := range templateFiles {
+		debugLog(3, "Loading embedded template for: %s", filename)
+		content, err := loadEmbeddedTemplate(templatePath)
+		if err != nil {
+			return err
+		}
+
 		filePath := filepath.Join(vaultPath, filename)
 		debugLog(3, "Writing initial file: %s", filePath)
 		if err := os.WriteFile(filePath, []byte(content), 0o644); err != nil {
