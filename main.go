@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -134,22 +135,13 @@ func generateVault(cmd *cobra.Command, args []string) error {
 }
 
 func generateVaultID() (string, error) {
-	debugLog(2, "Opening /dev/urandom for vault ID generation")
+	debugLog(2, "Generating cryptographically secure random vault ID")
 	// Generate 8 random bytes and convert to hex
 	bytes := make([]byte, 8)
-	file, err := os.Open("/dev/urandom")
+	_, err := rand.Read(bytes)
 	if err != nil {
-		debugLog(2, "Failed to open /dev/urandom: %v", err)
-		return "", err
-	}
-	defer file.Close()
-	debugLog(3, "Successfully opened /dev/urandom")
-
-	debugLog(2, "Reading 8 random bytes")
-	_, err = file.Read(bytes)
-	if err != nil {
-		debugLog(2, "Failed to read from /dev/urandom: %v", err)
-		return "", err
+		debugLog(2, "Failed to generate random bytes: %v", err)
+		return "", fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 
 	vaultID := fmt.Sprintf("%x", bytes)
