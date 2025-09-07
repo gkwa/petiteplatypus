@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Create the commands as a script
 RUN echo '#!/bin/bash' > /app/run.sh && \
-    echo 'petiteplatypus generate /tmp/trash --verbose' >> /app/run.sh && \
+    echo 'petiteplatypus generate /tmp/trash --verbose --verbose' >> /app/run.sh && \
     echo 'obsidian-cli set-default /tmp/trash' >> /app/run.sh && \
     echo 'obsidian-cli print-default' >> /app/run.sh && \
     chmod +x /app/run.sh
