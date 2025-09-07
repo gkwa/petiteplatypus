@@ -1,7 +1,7 @@
 FROM golang:1.23-alpine AS builder
 
-# Install git for go modules with pinned version
-RUN apk add --no-cache git=2.45.2-r0
+# Install git for go modules
+RUN apk add --no-cache git
 
 # Set GOTOOLCHAIN to auto to allow downloading newer Go versions if needed
 ENV GOTOOLCHAIN=auto
@@ -17,11 +17,11 @@ RUN go install github.com/gkwa/petiteplatypus@latest && \
     go install github.com/Yakitrak/obsidian-cli@latest && \
     go build -o petiteplatypus .
 
-# Use alpine with pinned version for the final image
+# Use alpine for the final image
 FROM alpine:3.20
 
-# Install bash for script execution with pinned version
-RUN apk add --no-cache bash=5.2.26-r0
+# Install bash for script execution
+RUN apk add --no-cache bash
 
 # Copy the Go binaries from builder stage
 COPY --from=builder /go/bin/obsidian-cli /usr/local/bin/
